@@ -1,82 +1,6 @@
 from scrabble import is_valid
-
-double_letters = [(0, 3), (0, 11), (2, 6), (2, 8), (3, 0,), (3, 7), (3, 14), (6, 2), (6, 6), (6, 8), (6, 12), (7, 3),
-                  (7, 11), (14, 3), (14, 11), (12, 6), (12, 8), (11, 0,), (11, 7), (11, 14), (8, 2), (8, 6), (8, 8),
-                  (8, 12)]
-triple_letters = [(1, 5), (1, 9), (5, 1), (5, 5), (5, 9), (5, 13), (9, 1), (9, 5), (9, 9), (9, 13), (13, 5), (13, 9)]
-double_words = [(7, 7), (1, 1), (2, 2), (3, 3), (4, 4), (1, 13), (2, 12), (3, 11), (4, 10), (13, 1), (12, 2), (11, 3),
-                (10, 4), (13, 13), (12, 12), (11, 11), (10, 10)]
-triples_words = [(0, 0), (0, 7), (0, 14), (7, 0), (7, 14), (14, 0), (14, 7), (14, 14)]
-
-
-class Square:
-    """Represent one square in the scrabble board"""
-
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        return "  "
-
-
-class DoubleLetter(Square):
-    """double"""
-
-    def __str__(self):
-        return "DL"
-
-
-class TripleLetter(Square):
-    """triple"""
-
-    def __str__(self):
-        return "TL"
-
-
-class DoubleWord(Square):
-    """dobuleword"""
-
-    def __str__(self):
-        return "DW"
-
-
-class TripleWord(Square):
-    """tRokafd"""
-
-    def __str__(self):
-        return "TW"
-
-# -------------------------------------------------------------------------------------------------------------------
-
-
-class Play:
-    """Represent a play on the board"""
-
-    def __init__(self, letters: dict):
-        self.letters = letters
-        if not (0 < len(letters) <= 7):
-            raise ValueError("Play is not of valid size")
-        for loc in letters:
-            if not (0 <= loc[0] <= 14) or not (0 <= loc[1] <= 14):
-                raise ValueError("Letter location is out of bounds")
-        if not self.same_xs() and not self.same_ys():
-            raise ValueError("Play must be in a straight line")
-
-    def same_xs(self):
-        x = list(self.letters.keys())[0][0]
-        for loc in self.letters:
-            if loc[0] != x:
-                return False
-        return True
-
-    def same_ys(self):
-        y = list(self.letters.keys())[0][1]
-        for loc in self.letters:
-            if loc[1] != y:
-                return False
-        return True
-
-# -------------------------------------------------------------------------------------------------------------------
+from squares import *
+from play import *
 
 
 class Board:
@@ -130,7 +54,15 @@ class Board:
         :param play: The play to be made
         :return: A list of words that are created from the given play
         """
-        result = []
+        result = set()
+        for loc in sorted(play.letters.keys()):
+            word = self.get_vertical_word(play.letters[loc], loc, play.letters)
+            if len(word) > 1:
+                result.add(word)
+            word = self.get_horizontal_word(play.letters[loc], loc, play.letters)
+            if len(word) > 1:
+                result.add(word)
+        print(result)
         return result
 
     def is_connected(self, play: Play) -> bool:
@@ -188,8 +120,6 @@ class Board:
                     return False
         return True
 
-
-
     def is_legal(self, play: Play) -> bool:
         """
         Verifies that the given play has no overlaps
@@ -209,8 +139,47 @@ class Board:
         """
         for word in self.get_all_words_from_play(play):
             if not is_valid(word):
+                print(word)
                 return False
         return self.is_legal(play) and self.is_connected(play) and self.is_consecutive(play)
+
+    def get_vertical_word(self, letter, loc, letters: dict):
+        word = letter
+        x = loc[0]
+        y = loc[1]
+        while x > 0 and (self.letters[x - 1][y] or (x - 1, y) in letters):
+            if self.letters[x - 1][y]:
+                word = self.letters[x - 1][y] + word
+            else:
+                word = letters[x - 1, y] + word
+            x -= 1
+        x = loc[0]
+        while x < 14 and (self.letters[x + 1][y] or (x + 1, y) in letters):
+            if self.letters[x + 1][y]:
+                word = word + self.letters[x + 1][y]
+            else:
+                word = word + letters[x + 1, y]
+            x += 1
+        return word
+
+    def get_horizontal_word(self, letter, loc, letters: dict):
+        word = letter
+        x = loc[0]
+        y = loc[1]
+        while y > 0 and (self.letters[x][y - 1] or (x, y - 1) in letters):
+            if self.letters[x][y - 1]:
+                word = self.letters[x][y - 1] + word
+            else:
+                word = letters[x, y - 1] + word
+            y -= 1
+        y = loc[1]
+        while y < 14 and (self.letters[x][y + 1] or (x, y + 1) in letters):
+            if self.letters[x][y + 1]:
+                word = word + self.letters[x][y + 1]
+            else:
+                word = word + letters[x, y + 1]
+            y += 1
+        return word
 
     def __str__(self):
         result = ""
@@ -222,6 +191,7 @@ class Board:
                     result += str(self.squares[row][col])
             result += "\n"
         return result
+
 
 # -------------------------------------------------------------------------------------------------------------------
 
@@ -237,6 +207,17 @@ if __name__ == "__main__":
     }))
     my_board.play(Play({
         (8, 7): "n",
-        (9, 7): "t"
+    }))
+    my_board.play(Play({
+        (8, 8): "o",
+        (9, 8): "l",
+        (10, 8): "i",
+        (11, 8): "s",
+        (12, 8): "h",
+    }))
+    my_board.play(Play({
+        (12, 9): "e",
+        (12, 10): "l",
+        (12, 11): "l",
     }))
     print(my_board)
