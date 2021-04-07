@@ -9,7 +9,7 @@ values = {"a": 1, "c": 3, "b": 3, "e": 1, "d": 2, "g": 2,
           "x": 8, "z": 10}
 
 
-def is_valid(word: str):
+def is_valid(word: str) -> bool:
     """
     Is the given word a valid scrabble word?
     :param word: The word whose validity is to be determined
@@ -34,5 +34,3 @@ def score_word(word: str):
     else:
         return 0
 
-
-print(score_word("butts"))
