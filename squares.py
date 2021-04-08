@@ -16,6 +16,12 @@ class Square:
     def __str__(self):
         return "  "
 
+    def get_letter_multiplier(self):
+        return 1
+
+    def get_word_multiplier(self):
+        return 1
+
 
 class DoubleLetter(Square):
     """double"""
@@ -23,12 +29,23 @@ class DoubleLetter(Square):
     def __str__(self):
         return "DL"
 
+    def get_letter_multiplier(self):
+        return 2
+
+    def get_word_multiplier(self):
+        return 1
 
 class TripleLetter(Square):
     """triple"""
 
     def __str__(self):
         return "TL"
+
+    def get_letter_multiplier(self):
+        return 3
+
+    def get_word_multiplier(self):
+        return 1
 
 
 class DoubleWord(Square):
@@ -37,9 +54,21 @@ class DoubleWord(Square):
     def __str__(self):
         return "DW"
 
+    def get_letter_multiplier(self):
+        return 1
+
+    def get_word_multiplier(self):
+        return 2
+
 
 class TripleWord(Square):
     """tRokafd"""
 
     def __str__(self):
         return "TW"
+
+    def get_letter_multiplier(self):
+        return 1
+
+    def get_word_multiplier(self):
+        return 3

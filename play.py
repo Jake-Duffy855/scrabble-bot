@@ -25,3 +25,9 @@ class Play:
             if loc[1] != y:
                 return False
         return True
+
+    def __str__(self):
+        result = ""
+        for key in self.letters:
+            result += str(key) + " " + self.letters[key] + "\n"
+        return result[:-1]
