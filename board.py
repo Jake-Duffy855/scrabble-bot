@@ -2,6 +2,7 @@ from scrabble import is_valid, all_length_perms
 from squares import *
 from play import *
 from random import randint
+import time
 
 
 class Board:
@@ -33,7 +34,12 @@ class Board:
         :param play: the play to score
         :return: the score of the given play
         """
-        return randint(0, 30)
+        # return 0
+        if self.is_valid_play(play):
+            # return randint(0, 30)
+            return 0
+        else:
+            return 0
 
     def get_best_play(self, letters: list) -> Play:
         """
@@ -41,13 +47,20 @@ class Board:
         :param letters: The list of letters that are able to be played
         :return: The play with the highest score using the given letters
         """
-        best_play = Play({})
+        word = "".join(letters)
+        perms = all_length_perms(word)
+        best_play = Play({(7, 7): "a"})
         best_score = 0
         for row in range(15):
             for col in range(15):
-                pass
-
-
+                for w in perms:
+                    self.score_play(Play({
+                        (7, 7): "a",
+                        (7, 8): "p",
+                        (7, 9): "p",
+                        (7, 10): "l",
+                        (7, 11): "e",
+                    }))
 
     def play(self, play: Play):
         if self.is_valid_play(play):
@@ -79,7 +92,6 @@ class Board:
             word = func(play.letters[loc], loc, play.letters)
             if len(word) > 1:
                 result.append(word)
-        print(result)
         return result
 
     def is_connected(self, play: Play) -> bool:
@@ -215,33 +227,37 @@ class Board:
 
 if __name__ == "__main__":
     my_board = Board()
-    my_board.play(Play({
-        (7, 7): "a",
-        (7, 8): "p",
-        (7, 9): "p",
-        (7, 10): "l",
-        (7, 11): "e",
-    }))
-    my_board.play(Play({
-        (8, 7): "n",
-    }))
-    my_board.play(Play({
-        (8, 8): "o",
-        (9, 8): "l",
-        (10, 8): "i",
-        (11, 8): "s",
-        (12, 8): "h",
-    }))
-    my_board.play(Play({
-        (12, 9): "e",
-        (12, 10): "l",
-        (12, 11): "l",
-    }))
-    my_board.play(Play({
-        (9, 4): "h",
-        (9, 5): "a",
-        (9, 6): "n",
-        (9, 7): "d",
-        (9, 9): "e",
-    }))
+    # my_board.play(Play({
+    #     (7, 7): "a",
+    #     (7, 8): "p",
+    #     (7, 9): "p",
+    #     (7, 10): "l",
+    #     (7, 11): "e",
+    # }))
+    # my_board.play(Play({
+    #     (8, 7): "n",
+    # }))
+    # my_board.play(Play({
+    #     (8, 8): "o",
+    #     (9, 8): "l",
+    #     (10, 8): "i",
+    #     (11, 8): "s",
+    #     (12, 8): "h",
+    # }))
+    # my_board.play(Play({
+    #     (12, 9): "e",
+    #     (12, 10): "l",
+    #     (12, 11): "l",
+    # }))
+    # my_board.play(Play({
+    #     (9, 4): "h",
+    #     (9, 5): "a",
+    #     (9, 6): "n",
+    #     (9, 7): "d",
+    #     (9, 9): "e",
+    # }))
     print(my_board)
+
+    t = time.time_ns()
+    my_board.get_best_play(['a', 'b', 'c', 'd', 'e', 'f', 'g'])
+    print((time.time_ns() - t)/1000000)

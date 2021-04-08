@@ -1,7 +1,9 @@
 import time
+
 with open("dictionary.txt") as d:
     words = d.read()
     words = words.split()
+    words = dict.fromkeys(words, True)
 
 values = {"a": 1, "c": 3, "b": 3, "e": 1, "d": 2, "g": 2,
           "f": 4, "i": 1, "h": 4, "k": 5, "j": 8, "m": 3,
@@ -17,7 +19,20 @@ def is_valid(word: str) -> bool:
     :return: True if the word is valid, False otherwise
     :rtype: bool
     """
-    return word.upper() in words
+    return words.get(word.upper(), False)
+
+
+def binary_search(word: str, left=0, right=len(words)):
+    if right - left < 2:
+        return False
+
+    mid = int((left + right) / 2)
+    if words[mid] == word:
+        return True
+    elif words[mid] > word:
+        return binary_search(word, left, mid)
+    else:
+        return binary_search(word, mid, right)
 
 
 def score_word(word: str):
