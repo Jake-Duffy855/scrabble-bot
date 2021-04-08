@@ -1,6 +1,7 @@
-from scrabble import is_valid
+from scrabble import is_valid, all_length_perms
 from squares import *
 from play import *
+from random import randint
 
 
 class Board:
@@ -32,6 +33,7 @@ class Board:
         :param play: the play to score
         :return: the score of the given play
         """
+        return randint(0, 30)
 
     def get_best_play(self, letters: list) -> Play:
         """
@@ -39,7 +41,13 @@ class Board:
         :param letters: The list of letters that are able to be played
         :return: The play with the highest score using the given letters
         """
-        pass
+        best_play = Play({})
+        best_score = 0
+        for row in range(15):
+            for col in range(15):
+                pass
+
+
 
     def play(self, play: Play):
         if self.is_valid_play(play):
@@ -54,14 +62,23 @@ class Board:
         :param play: The play to be made
         :return: A list of words that are created from the given play
         """
-        result = set()
+        result = []
+        first_loc = list(play.letters.keys())[0]
+
+        if play.same_xs():
+            func = self.get_vertical_word
+            main_word = self.get_horizontal_word(play.letters[first_loc], first_loc, play.letters)
+        else:
+            func = self.get_horizontal_word
+            main_word = self.get_vertical_word(play.letters[first_loc], first_loc, play.letters)
+
+        if len(main_word) > 1:
+            result.append(main_word)
+
         for loc in sorted(play.letters.keys()):
-            word = self.get_vertical_word(play.letters[loc], loc, play.letters)
+            word = func(play.letters[loc], loc, play.letters)
             if len(word) > 1:
-                result.add(word)
-            word = self.get_horizontal_word(play.letters[loc], loc, play.letters)
-            if len(word) > 1:
-                result.add(word)
+                result.append(word)
         print(result)
         return result
 
@@ -219,5 +236,12 @@ if __name__ == "__main__":
         (12, 9): "e",
         (12, 10): "l",
         (12, 11): "l",
+    }))
+    my_board.play(Play({
+        (9, 4): "h",
+        (9, 5): "a",
+        (9, 6): "n",
+        (9, 7): "d",
+        (9, 9): "e",
     }))
     print(my_board)

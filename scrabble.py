@@ -1,3 +1,4 @@
+import time
 with open("dictionary.txt") as d:
     words = d.read()
     words = words.split()
@@ -34,3 +35,34 @@ def score_word(word: str):
     else:
         return 0
 
+
+def char_position(letter):
+    return ord(letter) - 97
+
+
+def all_length_perms(word: str):
+    result = []
+    for i in range(len(word)):
+        result.extend(permutations_helper(word, "", i))
+    return result
+
+
+def permutations(word: str):
+    permutations_helper(word, "", 0)
+
+
+def permutations_helper(word: str, ans: str, left: int):
+    result = []
+    if len(word) == left:
+        result.append(ans)
+
+    alpha = [True for i in range(26)]
+
+    for i in range(len(word)):
+        ch = word[i]
+        rest = word[0:i] + word[i + 1:]
+
+        if alpha[char_position(ch)]:
+            result.extend(permutations_helper(rest, ans + ch, left))
+        alpha[char_position(ch)] = False
+    return result

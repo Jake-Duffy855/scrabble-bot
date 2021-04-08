@@ -3,6 +3,7 @@ class Play:
 
     def __init__(self, letters: dict):
         self.letters = letters
+
         if not (0 < len(letters) <= 7):
             raise ValueError("Play is not of valid size")
         for loc in letters:
