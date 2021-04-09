@@ -27,7 +27,7 @@ class Play:
         return True
 
     def __str__(self):
-        result = ""
+        result = "my_board.play(Play({\n"
         for key in self.letters:
-            result += str(key) + " " + self.letters[key] + "\n"
-        return result[:-1]
+            result += str(key) + ": \"" + self.letters[key] + "\",\n"
+        return result[:-2] + "}))"

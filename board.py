@@ -64,7 +64,7 @@ class Board:
                 for w in perms:
                     play = self.generate_play_starting_at(w, 7, col, True)
                     score = self.score_play(play)
-                    if score > best_score:
+                    if score > best_score or (score == best_score and len(play.letters) > len(best_play.letters)):
                         best_score, best_play = score, play
 
         else:
@@ -73,10 +73,16 @@ class Board:
                     # if self.letters[row][col] != "" and self.next_to_letter(row, col):
                     print(row, col)
                     for w in perms:
-                        for b in [True, False]:
+                        bools = [True, False]
+                        if row + len(w) > 15:
+                            bools.remove(False)
+                        elif col + len(w) > 15:
+                            bools.remove(True)
+                        for b in bools:
                             play = self.generate_play_starting_at(w, row, col, b)
                             score = self.score_play(play)
-                            if score > best_score:
+                            if score > best_score or \
+                                    (score == best_score and len(play.letters) > len(best_play.letters)):
                                 best_score, best_play = score, play
 
         return best_play, best_score
@@ -139,17 +145,18 @@ class Board:
         :return: True if connected, False is not
         """
         if self.letters == [["" for i in range(15)] for j in range(15)] and (7, 7) in play.letters.keys():
+
             return True
 
         for loc in play.letters:
             try:
-                if self.letters[loc[0] + 1][loc[1]] != "":
+                if 14 >= loc[0] + 1 and self.letters[loc[0] + 1][loc[1]] != "":
                     return True
-                elif self.letters[loc[0] - 1][loc[1]] != "":
+                elif 0 <= loc[0] - 1 and self.letters[loc[0] - 1][loc[1]] != "":
                     return True
-                elif self.letters[loc[0]][loc[1] + 1] != "":
+                elif 14 >= loc[1] + 1 and self.letters[loc[0]][loc[1] + 1] != "":
                     return True
-                elif self.letters[loc[0]][loc[1] - 1] != "":
+                elif 0 <= loc[1] - 1 and self.letters[loc[0]][loc[1] - 1] != "":
                     return True
             except IndexError:
                 pass
@@ -285,17 +292,113 @@ class Board:
 
 if __name__ == "__main__":
     my_board = Board()
-    # my_board.play(Play({
-    #     (7, 7): "e",
-    #     (7, 6): "t",
-    #     (7, 5): "l",
-    #     (7, 4): "o",
-    #     (7, 3): "v",
-    # }))
+    my_board.play(Play({
+        (7, 7): "e",
+        (7, 6): "t",
+        (7, 5): "l",
+        (7, 4): "o",
+        (7, 3): "v",
+    }))
+    my_board.play(Play({
+        (3, 3): "s",
+        (4, 3): "a",
+        (5, 3): "l",
+        (6, 3): "i",
+        (8, 3): "a",
+    }))
+    my_board.play(Play({
+        (8, 2): "b",
+        (9, 2): "o",
+        (10, 2): "t",
+        (11, 2): "t",
+        (12, 2): "e"}))
+    my_board.play(Play({
+        (0, 7): "m",
+        (1, 7): "i",
+        (2, 7): "s",
+        (3, 7): "q",
+        (4, 7): "u",
+        (5, 7): "o",
+        (6, 7): "t"}))
+    my_board.play(Play({
+        (1, 8): "s",
+        (2, 8): "h",
+        (3, 8): "i",
+        (4, 8): "r",
+        (5, 8): "e"}))
+    my_board.play(Play({
+        (9, 1): "w",
+        (10, 1): "e",
+        (11, 1): "a",
+        (12, 1): "r",
+        (13, 1): "s"}))
+    my_board.play(Play({
+        (11, 0): "v",
+        (12, 0): "o",
+        (13, 0): "i",
+        (14, 0): "d"}))
+    my_board.play(Play({
+        (2, 4): "f",
+        (3, 4): "o",
+        (4, 4): "x"}))
+    my_board.play(Play({
+        (1, 5): "j",
+        (2, 5): "a",
+        (3, 5): "n",
+        (4, 5): "e"}))
+    my_board.play(Play({
+        (8, 5): "a",
+        (8, 6): "e",
+        (8, 7): "r",
+        (8, 8): "y"}))
+    my_board.play(Play({
+        (9, 4): "o",
+        (9, 5): "p"}))
+    my_board.play(Play({
+        (9, 8): "a",
+        (9, 9): "r",
+        (9, 10): "r",
+        (9, 11): "a",
+        (9, 12): "i",
+        (9, 13): "g",
+        (9, 14): "n"}))
+    my_board.play(Play({
+        (6, 4): "n",
+        (6, 5): "c",
+        (6, 6): "u"}))
+    my_board.play(Play({
+        (7, 14): "g",
+        (8, 14): "e",
+        (10, 14): "t",
+        (11, 14): "y"}))
+    my_board.play(Play({
+        (11, 8): "u",
+        (11, 9): "n",
+        (11, 10): "d",
+        (11, 11): "e",
+        (11, 12): "i",
+        (11, 13): "f"}))
+    my_board.play(Play({
+        (2, 9): "o",
+        (3, 9): "n",
+        (4, 9): "e"}))
+    my_board.play(Play({
+        (0, 9): "r",
+        (1, 9): "h"}))
+    print(my_board)
 
     t = time.time_ns()
-    best = my_board.get_best_play("voteeol".split())
+    best = my_board.get_best_play("wgelksu".split())
     print(best[0], best[1])
     print((time.time_ns() - t) / 1000000)
     my_board.play(best[0])
     print(my_board)
+
+    # while True:
+    #     letters = input("Letters: ")
+    #     t = time.time_ns()
+    #     best = my_board.get_best_play(letters.split())
+    #     print(best[0], best[1])
+    #     print((time.time_ns() - t) / 1000000)
+    #     my_board.play(best[0])
+    #     print(my_board)
