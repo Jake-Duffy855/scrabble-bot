@@ -1,5 +1,7 @@
 import time
 
+dicts = {}
+
 with open("dictionary.txt") as d:
     words = d.read()
     words = words.split()
@@ -56,19 +58,12 @@ def char_position(letter):
 
 
 def all_length_perms(word: str):
+    return permutations_helper(word, "")
+
+
+def permutations_helper(word: str, ans: str):
     result = []
-    for i in range(len(word)):
-        result.extend(permutations_helper(word, "", i))
-    return result
-
-
-def permutations(word: str):
-    permutations_helper(word, "", 0)
-
-
-def permutations_helper(word: str, ans: str, left: int):
-    result = []
-    if len(word) == left:
+    if len(ans) > 0:
         result.append(ans)
 
     alpha = [True for i in range(26)]
@@ -77,7 +72,64 @@ def permutations_helper(word: str, ans: str, left: int):
         ch = word[i]
         rest = word[0:i] + word[i + 1:]
 
-        if alpha[char_position(ch)]:
-            result.extend(permutations_helper(rest, ans + ch, left))
+        if alpha[char_position(ch)] and is_valid_perm(ans + ch):
+            result.extend(permutations_helper(rest, ans + ch))
         alpha[char_position(ch)] = False
     return result
+
+
+def contains_all_letters(word: str, letters: str):
+    word = [char for char in word]
+    for letter in letters.upper():
+        try:
+            word.remove(letter)
+        except ValueError:
+            return False
+    return True
+
+
+def words_with_all_letters(letters: str) -> list:
+    result = []
+    for word in words:
+        if contains_all_letters(word, letters):
+            result.append(word)
+    return result
+
+
+def substring_in_order(word: str, sub: str) -> bool:
+    """
+    Does word have all the letters of sub in the order they appear in sub
+    :param word: the word to check the contents of
+    :param sub: the letters word must contain
+    :return: True if word contains all the letters of sub in order, False otherwise
+    """
+    index = 0
+    for char in sub.upper():
+        try:
+            index = word.index(char, index)
+        except ValueError:
+            return False
+    return True
+
+
+def get_dict(perm: str):
+    code = "".join(sorted(perm))
+    if code not in dicts.keys():
+        dicts[code] = words_with_all_letters(perm)
+    return dicts[code]
+
+
+def is_valid_perm(perm: str) -> bool:
+    """
+    Does the given permutation appear in order in any word in the dictionary
+    :param perm: the permutation of letters to check
+    :param dic: what to check the perms against
+    :return: True if the perm is found in order in the dictionary, False otherwise
+    """
+    to_check = words
+    if len(perm) >= 4:
+        to_check = get_dict(perm)
+    for word in to_check:
+        if substring_in_order(word, perm):
+            return True
+    return False

@@ -1,4 +1,4 @@
-from scrabble import is_valid, all_length_perms, values
+from scrabble import is_valid, all_length_perms, values, is_valid_perm
 from squares import *
 from play import *
 from word import *
@@ -48,14 +48,16 @@ class Board:
                 score += 50
         return score
 
-    def get_best_play(self, letters: list) -> Play:
+    def get_best_play(self, letters: str) -> Play:
         """
         Returns the highest score play possible with the given letters
         :param letters: The list of letters that are able to be played
         :return: The play with the highest score using the given letters
         """
-        word = "".join(letters)
-        perms = all_length_perms(word)
+        perms = all_length_perms(letters)
+        print(len(perms))
+        # perms = list(filter(is_valid_perm, perms))
+        # print(len(perms))
         best_play = Play({(7, 7): "a"})
         best_score = 0
         if self.letters == [["" for i in range(15)] for j in range(15)]:
@@ -87,7 +89,7 @@ class Board:
 
         return best_play, best_score
 
-    def generate_play_starting_at(self, word: str, row: int, col: int, right: bool):
+    def generate_play_starting_at(self, word: str, row: int, col: int, right: bool) -> Play:
         if right:
             dx, dy = 0, 1
         else:
@@ -145,7 +147,6 @@ class Board:
         :return: True if connected, False is not
         """
         if self.letters == [["" for i in range(15)] for j in range(15)] and (7, 7) in play.letters.keys():
-
             return True
 
         for loc in play.letters:
@@ -265,15 +266,29 @@ class Board:
             y += 1
         return Word(word, played)
 
-    def get_letter_multiplier(self, loc: tuple, played: bool):
+    def get_letter_multiplier(self, loc: tuple, played: bool) -> int:
         if played:
             return self.squares[loc[0]][loc[1]].get_letter_multiplier()
         return 1
 
-    def get_word_multiplier(self, loc: tuple, played: bool):
+    def get_word_multiplier(self, loc: tuple, played: bool) -> int:
         if played:
             return self.squares[loc[0]][loc[1]].get_word_multiplier()
         return 1
+
+    def get_text_at(self, row: int, col: int) -> str:
+        """
+        Return either the letter or board marking at that location
+        :param row: the row
+        :param col: col
+        :return: the text at row col
+        """
+        if self.letters[row][col] != "":
+            return self.letters[row][col].upper()
+        elif str(self.squares[row][col]) != "  ":
+            return str(self.squares[row][col])
+        else:
+            return ""
 
     def __str__(self):
         result = ""
@@ -293,102 +308,121 @@ class Board:
 if __name__ == "__main__":
     my_board = Board()
     my_board.play(Play({
-        (7, 7): "e",
-        (7, 6): "t",
-        (7, 5): "l",
-        (7, 4): "o",
-        (7, 3): "v",
-    }))
+        (7, 3): "w",
+        (7, 4): "a",
+        (7, 5): "n",
+        (7, 6): "e",
+        (7, 7): "y"}))
     my_board.play(Play({
-        (3, 3): "s",
-        (4, 3): "a",
-        (5, 3): "l",
-        (6, 3): "i",
-        (8, 3): "a",
-    }))
+        (6, 6): "f",
+        (6, 7): "o",
+        (6, 8): "r",
+        (6, 9): "a",
+        (6, 10): "g",
+        (6, 11): "e",
+        (6, 12): "r"}))
     my_board.play(Play({
-        (8, 2): "b",
-        (9, 2): "o",
-        (10, 2): "t",
-        (11, 2): "t",
-        (12, 2): "e"}))
+        (7, 11): "h",
+        (7, 12): "e",
+        (7, 13): "i",
+        (7, 14): "l"}))
     my_board.play(Play({
-        (0, 7): "m",
-        (1, 7): "i",
-        (2, 7): "s",
-        (3, 7): "q",
-        (4, 7): "u",
-        (5, 7): "o",
-        (6, 7): "t"}))
+        (5, 9): "j",
+        (5, 10): "a"}))
     my_board.play(Play({
-        (1, 8): "s",
-        (2, 8): "h",
-        (3, 8): "i",
-        (4, 8): "r",
-        (5, 8): "e"}))
+        (8, 0): "c",
+        (8, 1): "y",
+        (8, 2): "t",
+        (8, 3): "o",
+        (8, 4): "d",
+        (8, 5): "e",
+        (8, 6): "s"}))
     my_board.play(Play({
-        (9, 1): "w",
-        (10, 1): "e",
-        (11, 1): "a",
-        (12, 1): "r",
-        (13, 1): "s"}))
-    my_board.play(Play({
-        (11, 0): "v",
-        (12, 0): "o",
-        (13, 0): "i",
-        (14, 0): "d"}))
-    my_board.play(Play({
-        (2, 4): "f",
-        (3, 4): "o",
-        (4, 4): "x"}))
-    my_board.play(Play({
-        (1, 5): "j",
-        (2, 5): "a",
-        (3, 5): "n",
-        (4, 5): "e"}))
-    my_board.play(Play({
-        (8, 5): "a",
-        (8, 6): "e",
-        (8, 7): "r",
-        (8, 8): "y"}))
+        (6, 0): "a",
+        (7, 0): "e",
+        (9, 0): "i",
+        (10, 0): "d",
+        (11, 0): "i",
+        (12, 0): "u",
+        (13, 0): "m"}))
     my_board.play(Play({
         (9, 4): "o",
-        (9, 5): "p"}))
+        (9, 5): "w",
+        (9, 6): "t"}))
     my_board.play(Play({
-        (9, 8): "a",
-        (9, 9): "r",
-        (9, 10): "r",
-        (9, 11): "a",
-        (9, 12): "i",
-        (9, 13): "g",
-        (9, 14): "n"}))
+        (3, 4): "p",
+        (4, 4): "i",
+        (5, 4): "n",
+        (6, 4): "t",
+        (10, 4): "s"}))
     my_board.play(Play({
-        (6, 4): "n",
-        (6, 5): "c",
-        (6, 6): "u"}))
+        (1, 3): "b",
+        (2, 3): "r",
+        (3, 3): "u",
+        (4, 3): "x"}))
     my_board.play(Play({
-        (7, 14): "g",
-        (8, 14): "e",
-        (10, 14): "t",
-        (11, 14): "y"}))
+        (4, 10): "z",
+        (4, 11): "i",
+        (4, 12): "n"}))
     my_board.play(Play({
-        (11, 8): "u",
-        (11, 9): "n",
-        (11, 10): "d",
-        (11, 11): "e",
-        (11, 12): "i",
-        (11, 13): "f"}))
+        (3, 11): "m",
+        (3, 12): "o",
+        (3, 13): "s",
+        (3, 14): "k"}))
     my_board.play(Play({
-        (2, 9): "o",
-        (3, 9): "n",
-        (4, 9): "e"}))
+        (8, 13): "n",
+        (9, 13): "h",
+        (10, 13): "o",
+        (11, 13): "l",
+        (12, 13): "d",
+        (13, 13): "e",
+        (14, 13): "r"}))
     my_board.play(Play({
-        (0, 9): "r",
-        (1, 9): "h"}))
+        (14, 7): "m",
+        (14, 8): "a",
+        (14, 9): "n",
+        (14, 10): "g",
+        (14, 11): "i",
+        (14, 12): "e"}))
+    my_board.play(Play({
+        (0, 14): "p",
+        (1, 14): "o",
+        (2, 14): "l",
+        (4, 14): "a",
+        (5, 14): "s"}))
+    my_board.play(Play({
+        (2, 8): "q",
+        (2, 9): "a",
+        (2, 10): "n",
+        (2, 11): "a",
+        (2, 12): "t"}))
+    my_board.play(Play({
+        (1, 9): "f",
+        (1, 10): "e"}))
+    my_board.play(Play({
+        (13, 1): "o",
+        (13, 2): "e",
+        (13, 3): "r",
+        (13, 4): "e",
+        (13, 5): "d"}))
+    my_board.play(Play({
+        (12, 2): "o",
+        (12, 3): "u",
+        (12, 4): "b",
+        (12, 5): "i",
+        (12, 6): "t"}))
+    my_board.play(Play({
+        (0, 1): "a",
+        (1, 1): "c",
+        (2, 1): "i",
+        (3, 1): "d",
+        (4, 1): "i",
+        (5, 1): "e",
+        (6, 1): "r"}))
     print(my_board)
 
     t = time.time_ns()
-    best = my_board.get_best_play("wgelksu".split())
+    best = my_board.get_best_play("vtleguv")
     print(best[0], best[1])
     print((time.time_ns() - t) / 1000000)
     my_board.play(best[0])
