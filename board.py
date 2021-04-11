@@ -9,10 +9,16 @@ class Board:
     """Model to represent the board in scrabble"""
 
     def __init__(self):
+        self.squares = []
         self.init_squares()
         self.letters = [["" for i in range(15)] for j in range(15)]
+        self.playable_areas = {}
+        self.init_playable_areas()
 
     def init_squares(self):
+        """
+        Generate the board with all the bonus squares
+        """
         self.squares = [[Square() for i in range(15)] for j in range(15)]
 
         # add double words
@@ -27,6 +33,57 @@ class Board:
         # add triple letters
         for loc in triple_letters:
             self.squares[loc[0]][loc[1]] = TripleLetter()
+
+    def init_playable_areas(self):
+        """
+        Initialize the playable areas for all length plays
+        """
+        for length in range(1, 8):
+            self.playable_areas[length] = set()
+            for col in range(length):
+                self.playable_areas[length].add((7, 7 - col))
+
+    def update_playable_areas(self, play: Play, first_play: bool):
+        """
+        Update the playable areas for each length play based on the given play
+        :param play: the play that will affect the playable areas
+        :param first_play: is this play the first play
+        """
+        if first_play:
+            self.playable_areas = {length: set() for length in range(1, 8)}
+        # remove the spaces in that play from all playable areas
+        for loc in play.letters:
+            for playable_area in self.playable_areas:
+                try:
+                    self.playable_areas[playable_area].remove(loc)
+                except KeyError:
+                    pass
+        # add all new playable spaces
+        for loc in play.letters:
+            self.add_playable_area_from_loc(loc)
+
+    def add_playable_area_from_loc(self, loc: tuple, recur=True):
+        """
+        Add all reachable locations from the given loc to the playable areas
+        :param loc: the location from which to extend the playable areas
+        :param recur: whether to add reachable squares from surrounding tiles as well
+        """
+        row, col = loc
+        if recur:
+            max_dist = 7
+            diff = 0
+            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                new_row, new_col = row + dx, col + dy
+                self.add_playable_area_from_loc((new_row, new_col), False)
+        else:
+            max_dist = 6
+            diff = 1
+        for dist in range(1, max_dist + 1):
+            for dx, dy in [(0, dist), (0, -dist), (dist, 0), (-dist, 0)]:
+                new_row, new_col = row + dx, col + dy
+                if 0 <= new_row <= 14 and 0 <= new_col <= 14 and self.letters[new_row][new_col] == "":
+                    for playable_area in range(dist + diff, 8):
+                        self.playable_areas[playable_area].add((new_row, new_col))
 
     def score_play(self, play: Play) -> int:
         """
@@ -54,39 +111,27 @@ class Board:
         :param letters: The list of letters that are able to be played
         :return: The play with the highest score using the given letters
         """
-        perms = all_length_perms(letters)
-        print(len(perms))
-        # perms = list(filter(is_valid_perm, perms))
-        # print(len(perms))
         best_play = Play({(7, 7): "a"})
         best_score = 0
         if self.letters == [["" for i in range(15)] for j in range(15)]:
+            perms = all_length_perms(letters, first=True)
             perms = list(filter(lambda x: is_valid(x), perms))
-            for col in range(1, 8):
-                for w in perms:
-                    play = self.generate_play_starting_at(w, 7, col, True)
-                    score = self.score_play(play)
-                    if score > best_score or (score == best_score and len(play.letters) > len(best_play.letters)):
-                        best_score, best_play = score, play
-
         else:
-            for row in range(15):
-                for col in range(15):
-                    # if self.letters[row][col] != "" and self.next_to_letter(row, col):
-                    print(row, col)
-                    for w in perms:
-                        bools = [True, False]
-                        if row + len(w) > 15:
-                            bools.remove(False)
-                        elif col + len(w) > 15:
-                            bools.remove(True)
-                        for b in bools:
-                            play = self.generate_play_starting_at(w, row, col, b)
-                            score = self.score_play(play)
-                            if score > best_score or \
-                                    (score == best_score and len(play.letters) > len(best_play.letters)):
-                                best_score, best_play = score, play
-
+            perms = all_length_perms(letters)
+        for w in perms:
+            for loc in self.playable_areas[len(w)]:
+                row, col = loc
+                bools = [True, False]
+                if row + len(w) > 15:
+                    bools.remove(False)
+                elif col + len(w) > 15:
+                    bools.remove(True)
+                for b in bools:
+                    play = self.generate_play_starting_at(w, row, col, b)
+                    score = self.score_play(play)
+                    if score > best_score or \
+                            (score == best_score and len(play.letters) > len(best_play.letters)):
+                        best_score, best_play = score, play
         return best_play, best_score
 
     def generate_play_starting_at(self, word: str, row: int, col: int, right: bool) -> Play:
@@ -109,11 +154,16 @@ class Board:
         return Play(play)
 
     def play(self, play: Play):
+        if self.letters == [["" for i in range(15)] for j in range(15)]:
+            first_play = True
+        else:
+            first_play = False
         if self.is_valid_play(play):
             for loc in play.letters:
                 self.letters[loc[0]][loc[1]] = play.letters[loc]
         else:
             raise ValueError("This play is invalid")
+        self.update_playable_areas(play, first_play)
 
     def get_all_words_from_play(self, play: Play) -> list:
         """
@@ -301,138 +351,137 @@ class Board:
             result += "\n"
         return result
 
-
 # -------------------------------------------------------------------------------------------------------------------
 
-
-if __name__ == "__main__":
-    my_board = Board()
-    my_board.play(Play({
-        (7, 3): "w",
-        (7, 4): "a",
-        (7, 5): "n",
-        (7, 6): "e",
-        (7, 7): "y"}))
-    my_board.play(Play({
-        (6, 6): "f",
-        (6, 7): "o",
-        (6, 8): "r",
-        (6, 9): "a",
-        (6, 10): "g",
-        (6, 11): "e",
-        (6, 12): "r"}))
-    my_board.play(Play({
-        (7, 11): "h",
-        (7, 12): "e",
-        (7, 13): "i",
-        (7, 14): "l"}))
-    my_board.play(Play({
-        (5, 9): "j",
-        (5, 10): "a"}))
-    my_board.play(Play({
-        (8, 0): "c",
-        (8, 1): "y",
-        (8, 2): "t",
-        (8, 3): "o",
-        (8, 4): "d",
-        (8, 5): "e",
-        (8, 6): "s"}))
-    my_board.play(Play({
-        (6, 0): "a",
-        (7, 0): "e",
-        (9, 0): "i",
-        (10, 0): "d",
-        (11, 0): "i",
-        (12, 0): "u",
-        (13, 0): "m"}))
-    my_board.play(Play({
-        (9, 4): "o",
-        (9, 5): "w",
-        (9, 6): "t"}))
-    my_board.play(Play({
-        (3, 4): "p",
-        (4, 4): "i",
-        (5, 4): "n",
-        (6, 4): "t",
-        (10, 4): "s"}))
-    my_board.play(Play({
-        (1, 3): "b",
-        (2, 3): "r",
-        (3, 3): "u",
-        (4, 3): "x"}))
-    my_board.play(Play({
-        (4, 10): "z",
-        (4, 11): "i",
-        (4, 12): "n"}))
-    my_board.play(Play({
-        (3, 11): "m",
-        (3, 12): "o",
-        (3, 13): "s",
-        (3, 14): "k"}))
-    my_board.play(Play({
-        (8, 13): "n",
-        (9, 13): "h",
-        (10, 13): "o",
-        (11, 13): "l",
-        (12, 13): "d",
-        (13, 13): "e",
-        (14, 13): "r"}))
-    my_board.play(Play({
-        (14, 7): "m",
-        (14, 8): "a",
-        (14, 9): "n",
-        (14, 10): "g",
-        (14, 11): "i",
-        (14, 12): "e"}))
-    my_board.play(Play({
-        (0, 14): "p",
-        (1, 14): "o",
-        (2, 14): "l",
-        (4, 14): "a",
-        (5, 14): "s"}))
-    my_board.play(Play({
-        (2, 8): "q",
-        (2, 9): "a",
-        (2, 10): "n",
-        (2, 11): "a",
-        (2, 12): "t"}))
-    my_board.play(Play({
-        (1, 9): "f",
-        (1, 10): "e"}))
-    my_board.play(Play({
-        (13, 1): "o",
-        (13, 2): "e",
-        (13, 3): "r",
-        (13, 4): "e",
-        (13, 5): "d"}))
-    my_board.play(Play({
-        (12, 2): "o",
-        (12, 3): "u",
-        (12, 4): "b",
-        (12, 5): "i",
-        (12, 6): "t"}))
-    my_board.play(Play({
-        (0, 1): "a",
-        (1, 1): "c",
-        (2, 1): "i",
-        (3, 1): "d",
-        (4, 1): "i",
-        (5, 1): "e",
-        (6, 1): "r"}))
-    print(my_board)
-
-    t = time.time_ns()
-    best = my_board.get_best_play("vtleguv")
-    print(best[0], best[1])
-    print((time.time_ns() - t) / 1000000)
-    my_board.play(best[0])
-    print(my_board)
-
-    # while True:
-    #     letters = input("Letters: ")
-    #     t = time.time_ns()
-    #     best = my_board.get_best_play(letters.split())
-    #     print(best[0], best[1])
-    #     print((time.time_ns() - t) / 1000000)
-    #     my_board.play(best[0])
-    #     print(my_board)
+#
+# if __name__ == "__main__":
+#     my_board = Board()
+#     my_board.play(Play({
+#         (7, 3): "w",
+#         (7, 4): "a",
+#         (7, 5): "n",
+#         (7, 6): "e",
+#         (7, 7): "y"}))
+#     my_board.play(Play({
+#         (6, 6): "f",
+#         (6, 7): "o",
+#         (6, 8): "r",
+#         (6, 9): "a",
+#         (6, 10): "g",
+#         (6, 11): "e",
+#         (6, 12): "r"}))
+#     my_board.play(Play({
+#         (7, 11): "h",
+#         (7, 12): "e",
+#         (7, 13): "i",
+#         (7, 14): "l"}))
+#     my_board.play(Play({
+#         (5, 9): "j",
+#         (5, 10): "a"}))
+#     my_board.play(Play({
+#         (8, 0): "c",
+#         (8, 1): "y",
+#         (8, 2): "t",
+#         (8, 3): "o",
+#         (8, 4): "d",
+#         (8, 5): "e",
+#         (8, 6): "s"}))
+#     my_board.play(Play({
+#         (6, 0): "a",
+#         (7, 0): "e",
+#         (9, 0): "i",
+#         (10, 0): "d",
+#         (11, 0): "i",
+#         (12, 0): "u",
+#         (13, 0): "m"}))
+#     my_board.play(Play({
+#         (9, 4): "o",
+#         (9, 5): "w",
+#         (9, 6): "t"}))
+#     my_board.play(Play({
+#         (3, 4): "p",
+#         (4, 4): "i",
+#         (5, 4): "n",
+#         (6, 4): "t",
+#         (10, 4): "s"}))
+#     my_board.play(Play({
+#         (1, 3): "b",
+#         (2, 3): "r",
+#         (3, 3): "u",
+#         (4, 3): "x"}))
+#     my_board.play(Play({
+#         (4, 10): "z",
+#         (4, 11): "i",
+#         (4, 12): "n"}))
+#     my_board.play(Play({
+#         (3, 11): "m",
+#         (3, 12): "o",
+#         (3, 13): "s",
+#         (3, 14): "k"}))
+#     my_board.play(Play({
+#         (8, 13): "n",
+#         (9, 13): "h",
+#         (10, 13): "o",
+#         (11, 13): "l",
+#         (12, 13): "d",
+#         (13, 13): "e",
+#         (14, 13): "r"}))
+#     my_board.play(Play({
+#         (14, 7): "m",
+#         (14, 8): "a",
+#         (14, 9): "n",
+#         (14, 10): "g",
+#         (14, 11): "i",
+#         (14, 12): "e"}))
+#     my_board.play(Play({
+#         (0, 14): "p",
+#         (1, 14): "o",
+#         (2, 14): "l",
+#         (4, 14): "a",
+#         (5, 14): "s"}))
+#     my_board.play(Play({
+#         (2, 8): "q",
+#         (2, 9): "a",
+#         (2, 10): "n",
+#         (2, 11): "a",
+#         (2, 12): "t"}))
+#     my_board.play(Play({
+#         (1, 9): "f",
+#         (1, 10): "e"}))
+#     my_board.play(Play({
+#         (13, 1): "o",
+#         (13, 2): "e",
+#         (13, 3): "r",
+#         (13, 4): "e",
+#         (13, 5): "d"}))
+#     my_board.play(Play({
+#         (12, 2): "o",
+#         (12, 3): "u",
+#         (12, 4): "b",
+#         (12, 5): "i",
+#         (12, 6): "t"}))
+#     my_board.play(Play({
+#         (0, 1): "a",
+#         (1, 1): "c",
+#         (2, 1): "i",
+#         (3, 1): "d",
+#         (4, 1): "i",
+#         (5, 1): "e",
+#         (6, 1): "r"}))
+#     print(my_board)
+#
+#     t = time.time_ns()
+#     best = my_board.get_best_play("vtleguv")
+#     print(best[0], best[1])
+#     print((time.time_ns() - t) / 1000000)
+#     my_board.play(best[0])
+#     print(my_board)
+#
+#     # while True:
+#     #     letters = input("Letters: ")
+#     #     t = time.time_ns()
+#     #     best = my_board.get_best_play(letters.split())
+#     #     print(best[0], best[1])
+#     #     print((time.time_ns() - t) / 1000000)
+#     #     my_board.play(best[0])
+#     #     print(my_board)

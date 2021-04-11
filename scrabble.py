@@ -57,11 +57,11 @@ def char_position(letter):
     return ord(letter) - 97
 
 
-def all_length_perms(word: str):
-    return permutations_helper(word, "")
+def all_length_perms(word: str, first=False):
+    return permutations_helper(word, "", first)
 
 
-def permutations_helper(word: str, ans: str):
+def permutations_helper(word: str, ans: str, first=False):
     result = []
     if len(ans) > 0:
         result.append(ans)
@@ -72,8 +72,8 @@ def permutations_helper(word: str, ans: str):
         ch = word[i]
         rest = word[0:i] + word[i + 1:]
 
-        if alpha[char_position(ch)] and is_valid_perm(ans + ch):
-            result.extend(permutations_helper(rest, ans + ch))
+        if alpha[char_position(ch)] and (first or is_valid_perm(ans + ch)):
+            result.extend(permutations_helper(rest, ans + ch, first))
         alpha[char_position(ch)] = False
     return result
 

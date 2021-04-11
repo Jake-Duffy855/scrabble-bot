@@ -19,6 +19,10 @@ get_best_text = font.render("Get Best", False, (255, 255, 255), (50, 50, 50))
 get_best_button = get_best_text.get_rect(center=(280, 475))
 letters = {}
 
+# Set up the drawing window
+screen = pygame.display.set_mode(size)
+my_board = Board()
+
 
 class InputBox:
 
@@ -34,7 +38,7 @@ class InputBox:
             # If the user clicked on the input_box rect.
             if self.rect.collidepoint(event.pos):
                 # Toggle the active variable.
-                self.active = not self.active
+                self.active = True
             else:
                 self.active = False
             # Change the current color of the input box.
@@ -42,7 +46,7 @@ class InputBox:
         if event.type == pygame.KEYDOWN:
             if self.active:
                 if event.key == pygame.K_RETURN:
-                    print(self.text)
+                    get_best()
                     self.text = ''
                 elif event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
@@ -65,6 +69,7 @@ class InputBox:
     def get_text(self):
         text = self.text
         self.text = ""
+        self.txt_surface = FONT.render(self.text, True, self.color)
         return text
 
     def is_active(self):
@@ -72,10 +77,6 @@ class InputBox:
 
 
 input_box = InputBox(20, 465, 40, 20)
-
-# Set up the drawing window
-screen = pygame.display.set_mode(size)
-my_board = Board()
 
 
 def render_board(board: Board):
@@ -85,6 +86,7 @@ def render_board(board: Board):
                 board_text = letters[row, col].upper()
             else:
                 board_text = board.get_text_at(row, col)
+
             if board_text == 'DW':
                 color = (215, 150, 150)
             elif board_text == 'TW':
@@ -119,6 +121,58 @@ def render_board(board: Board):
 def render_controls():
     screen.blit(submit_text, submit_button)
     screen.blit(get_best_text, get_best_button)
+    input_box.update()
+    input_box.draw(screen)
+
+
+def get_best():
+    print("Running...")
+    t = time.time_ns()
+    best = my_board.get_best_play(input_box.get_text())
+    print(best[0], best[1])
+    print((time.time_ns() - t) / 1000000)
+    try:
+        my_board.play(best[0])
+    except ValueError:
+        print("Invalid play")
+
+
+def handle_key(event):
+    if event.key == pygame.K_LEFT:
+        cursor[0] -= 1
+    elif event.key == pygame.K_RIGHT:
+        cursor[0] += 1
+    elif event.key == pygame.K_UP:
+        cursor[1] -= 1
+    elif event.key == pygame.K_DOWN:
+        cursor[1] += 1
+    elif event.key == pygame.K_RETURN and not input_box.is_active():
+        submit()
+    elif 97 <= event.key <= 122 and not input_box.is_active():
+        try:
+            letters[cursor[1], cursor[0]] = chr(event.key)
+        except ValueError:
+            pass
+
+
+def submit():
+    global letters
+    try:
+        print(my_board.score_play(Play(letters)))
+        my_board.play(Play(letters))
+    except ValueError:
+        print("Invalid Play")
+    letters = {}
+
+
+def handle_button_up(event):
+    global letters, cursor
+    if submit_button.collidepoint(event.pos):
+        submit()
+    elif get_best_button.collidepoint(event.pos):
+        get_best()
+    elif event.pos[1] <= 450:
+        cursor = [int(i / tile_size) for i in event.pos]
 
 
 if __name__ == '__main__':
@@ -134,9 +188,6 @@ if __name__ == '__main__':
         render_board(my_board)
         render_controls()
 
-        input_box.update()
-        input_box.draw(screen)
-
         # Flip the display
         pygame.display.flip()
 
@@ -148,39 +199,10 @@ if __name__ == '__main__':
 
             input_box.handle_event(event)
 
-            # handle MOUSEBUTTONUP
-
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    cursor[0] -= 1
-                elif event.key == pygame.K_RIGHT:
-                    cursor[0] += 1
-                elif event.key == pygame.K_UP:
-                    cursor[1] -= 1
-                elif event.key == pygame.K_DOWN:
-                    cursor[1] += 1
-                elif 97 <= event.key <= 122 and not input_box.is_active():
-                    try:
-                        letters[cursor[1], cursor[0]] = chr(event.key)
-                    except ValueError:
-                        pass
+                handle_key(event)
 
             if event.type == pygame.MOUSEBUTTONUP:
-                if submit_button.collidepoint(event.pos):
-                    try:
-                        print(my_board.score_play(Play(letters)))
-                        my_board.play(Play(letters))
-                    except ValueError:
-                        print("Invalid Play")
-                    letters = {}
-                elif get_best_button.collidepoint(event.pos):
-                    print("Running...")
-                    t = time.time_ns()
-                    best = my_board.get_best_play(input_box.get_text())
-                    print(best[0], best[1])
-                    print((time.time_ns() - t) / 1000000)
-                    my_board.play(best[0])
-                elif event.pos[1] <= 450:
-                    cursor = [int(i / tile_size) for i in event.pos]
+                handle_button_up(event)
 
         clock.tick(30)
