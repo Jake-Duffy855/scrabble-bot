@@ -139,13 +139,13 @@ def get_best():
 
 def handle_key(event):
     if event.key == pygame.K_LEFT:
-        cursor[0] -= 1
+        cursor[0] = max(0, cursor[0] - 1)
     elif event.key == pygame.K_RIGHT:
-        cursor[0] += 1
+        cursor[0] = min(14, cursor[0] + 1)
     elif event.key == pygame.K_UP:
-        cursor[1] -= 1
+        cursor[1] = max(0, cursor[1] - 1)
     elif event.key == pygame.K_DOWN:
-        cursor[1] += 1
+        cursor[1] = min(14, cursor[1] + 1)
     elif event.key == pygame.K_RETURN and not input_box.is_active():
         submit()
     elif 97 <= event.key <= 122 and not input_box.is_active():

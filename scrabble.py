@@ -1,8 +1,7 @@
 import time
 
 dicts = {}
-
-with open("dictionary.txt") as d:
+with open("merriam_webster.txt") as d:
     words = d.read()
     words = words.split()
     words = dict.fromkeys(words, True)
