@@ -1,7 +1,10 @@
 import time
 
+merriam_webster_2014 = "merriam_webster.txt"
+british_dictionary = "english_dictionary.txt"
+
 dicts = {}
-with open("merriam_webster.txt") as d:
+with open(british_dictionary) as d:
     words = d.read()
     words = words.split()
     words = dict.fromkeys(words, True)
@@ -53,7 +56,10 @@ def score_word(word: str):
 
 
 def char_position(letter):
-    return ord(letter) - 97
+    if letter != "?":
+        return ord(letter.lower()) - 97
+    else:
+        return 26
 
 
 def all_length_perms(word: str, first=False):
@@ -65,7 +71,7 @@ def permutations_helper(word: str, ans: str, first=False):
     if len(ans) > 0:
         result.append(ans)
 
-    alpha = [True for i in range(26)]
+    alpha = [True for i in range(27)]
 
     for i in range(len(word)):
         ch = word[i]
@@ -79,12 +85,16 @@ def permutations_helper(word: str, ans: str, first=False):
 
 def contains_all_letters(word: str, letters: str):
     word = [char for char in word]
+    blanks = 0
     for letter in letters.upper():
-        try:
-            word.remove(letter)
-        except ValueError:
-            return False
-    return True
+        if letter == "?":
+            blanks += 1
+        else:
+            try:
+                word.remove(letter)
+            except ValueError:
+                return False
+    return len(word) >= blanks
 
 
 def words_with_all_letters(letters: str) -> list:
@@ -104,10 +114,13 @@ def substring_in_order(word: str, sub: str) -> bool:
     """
     index = 0
     for char in sub.upper():
-        try:
-            index = word.index(char, index)
-        except ValueError:
-            return False
+        if char == "?":
+            index += 1
+        else:
+            try:
+                index = word.index(char, index)
+            except ValueError:
+                return False
     return True
 
 

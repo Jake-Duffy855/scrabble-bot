@@ -26,6 +26,19 @@ class Play:
                 return False
         return True
 
+    def replace_blanks(self, replacements: list):
+        blank = 0
+        for loc in self.letters:
+            if self.letters[loc] == "?":
+                try:
+                    self.letters[loc] = replacements[blank]
+                    blank += 1
+                except Exception:
+                    raise ValueError("Dimension mismatch between blanks and replacements")
+
+    def copy(self):
+        return Play(self.letters.copy())
+
     def __str__(self):
         result = "my_board.play(Play({\n"
         for key in self.letters:

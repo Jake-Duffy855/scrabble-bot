@@ -128,11 +128,11 @@ def render_controls():
 def get_best():
     print("Running...")
     t = time.time_ns()
-    best = my_board.get_best_play(input_box.get_text())
-    print(best[0], best[1])
+    best_play, score = my_board.get_best_play(input_box.get_text())
+    print(best_play, score)
     print((time.time_ns() - t) / 1000000)
     try:
-        my_board.play(best[0])
+        my_board.play(best_play)
     except ValueError:
         print("Invalid play")
 
