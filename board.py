@@ -1,4 +1,4 @@
-from scrabble import is_valid, all_length_perms, values, is_valid_perm
+from scrabble import is_valid, all_length_perms, values, is_valid_perm, generate_blank_replacements
 from squares import *
 from play import *
 from word import *
@@ -104,20 +104,30 @@ class Board:
             score += 50
         return score
 
-    def get_best_play(self, letters: str) -> Play:
+    def get_best_play(self, letters: str) -> tuple:
         """
         Returns the highest score play possible with the given letters
         :param letters: The list of letters that are able to be played
         :return: The play with the highest score using the given letters
         """
+        start_time = time.time()
         best_play = Play({(7, 7): "a"})
         best_score = 0
         if self.letters == [["" for i in range(15)] for j in range(15)]:
             perms = all_length_perms(letters, first=True)
-            perms = list(filter(lambda x: is_valid(x), perms))
+            if "?" in letters:
+                for perm in perms:
+                    if "?" not in perm and not is_valid(perm):
+                        perms.remove(perm)
+            else:
+                perms = list(filter(lambda x: is_valid(x), perms))
         else:
             perms = all_length_perms(letters)
+        perms = sorted(perms, key=lambda x: len(x), reverse=True)
         for w in perms:
+            if time.time() - start_time >= 30:
+                print(w)
+                return best_play, best_score
             for loc in self.playable_areas[len(w)]:
                 row, col = loc
                 bools = [True, False]
@@ -129,15 +139,14 @@ class Board:
                     play = self.generate_play_starting_at(w, row, col, b)
                     if "?" in w:
                         score = self.score_play(play)
-                        if score > best_score or (score == best_score and len(play.letters) > len(best_play.letters)):
+                        if score > best_score:
                             valid, play = self.is_valid_play_with_blank(play)
                             if valid:
                                 best_score, best_play = score, play
                     else:
                         if self.is_valid_play(play):
                             score = self.score_play(play)
-                            if score > best_score or \
-                                    (score == best_score and len(play.letters) > len(best_play.letters)):
+                            if score > best_score:
                                 best_score, best_play = score, play
         return best_play, best_score
 
@@ -299,13 +308,12 @@ class Board:
         :return: True if the play is valid, False, otherwise
         """
         blanks = list(play.letters.values()).count("?")
-        replacements = [[] for i in range(26 ** blanks)]
-        for letter in values:
-            if letter != "?":
-                new_play = play.copy()
-                new_play.replace_blanks([letter])
-                if self.is_valid_play(new_play):
-                    return True, new_play
+        replacements = generate_blank_replacements(blanks)
+        for replacement in replacements:
+            new_play = play.copy()
+            new_play.replace_blanks(replacement)
+            if self.is_valid_play(new_play):
+                return True, new_play
         return False, None
 
     def get_vertical_word(self, letter: str, loc: tuple, letters: dict) -> Word:

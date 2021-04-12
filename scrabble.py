@@ -15,6 +15,9 @@ values = {"a": 1, "c": 3, "b": 3, "e": 1, "d": 2, "g": 2,
           "r": 1, "u": 1, "t": 1, "w": 4, "v": 4, "y": 4,
           "x": 8, "z": 10, "?": 0}
 
+alphabet = ['s', 'a', 'e', 'i', 'o', 'u', 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 't',
+            'v', 'w', 'x', 'y', 'z']
+
 
 def is_valid(word: str) -> bool:
     """
@@ -145,3 +148,13 @@ def is_valid_perm(perm: str) -> bool:
         if substring_in_order(word, perm):
             return True
     return False
+
+
+def generate_blank_replacements(blanks: int):
+    replacements = [[] for i in range(26 ** blanks)]
+    index = 0
+    for blank in range(blanks):
+        for spot in range(len(replacements)):
+            replacements[spot].append(alphabet[int(index / 26 ** blank) % 26])
+            index += 1
+    return replacements

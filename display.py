@@ -4,6 +4,7 @@ import time
 
 pygame.init()
 pygame.font.init()
+pygame.display.set_caption("Scrabble")
 font = pygame.font.SysFont("Arial", 16)
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
@@ -28,10 +29,10 @@ class InputBox:
 
     def __init__(self, x, y, w, h, text=''):
         self.rect = pygame.Rect(x, y, w, h)
-        self.color = COLOR_INACTIVE
+        self.color = COLOR_ACTIVE
         self.text = text
         self.txt_surface = FONT.render(text, True, self.color)
-        self.active = False
+        self.active = True
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -128,13 +129,18 @@ def render_controls():
 def get_best():
     print("Running...")
     t = time.time_ns()
-    best_play, score = my_board.get_best_play(input_box.get_text())
-    print(best_play, score)
-    print((time.time_ns() - t) / 1000000)
-    try:
-        my_board.play(best_play)
-    except ValueError:
-        print("Invalid play")
+    text = input_box.get_text()
+    if len(text) <= 7:
+        best_play, score = my_board.get_best_play(text)
+        print(best_play, score)
+        print((time.time_ns() - t) / 1000000)
+        try:
+            my_board.play(best_play)
+        except ValueError:
+            print("Invalid play")
+
+    else:
+        print("Please enter up to 7 letters.")
 
 
 def handle_key(event):
