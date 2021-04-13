@@ -125,7 +125,7 @@ class Board:
             perms = all_length_perms(letters)
         perms = sorted(perms, key=lambda x: len(x), reverse=True)
         for w in perms:
-            if time.time() - start_time >= 30:
+            if time.time() - start_time >= 45:
                 print(w)
                 return best_play, best_score
             for loc in self.playable_areas[len(w)]:
