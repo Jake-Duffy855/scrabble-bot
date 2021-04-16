@@ -12,6 +12,7 @@ class Board:
         self.squares = []
         self.init_squares()
         self.letters = [["" for i in range(15)] for j in range(15)]
+        # (length, right_bool): [locs]
         self.playable_areas = {}
         self.init_playable_areas()
 
@@ -38,10 +39,10 @@ class Board:
         """
         Initialize the playable areas for all length plays
         """
+        self.playable_areas = {(length, b): set() for length in range(1, 8) for b in [True, False]}
         for length in range(1, 8):
-            self.playable_areas[length] = set()
             for col in range(length):
-                self.playable_areas[length].add((7, 7 - col))
+                self.playable_areas[length, True].add((7, 7 - col))
 
     def update_playable_areas(self, play: Play, first_play: bool):
         """
@@ -50,7 +51,7 @@ class Board:
         :param first_play: is this play the first play
         """
         if first_play:
-            self.playable_areas = {length: set() for length in range(1, 8)}
+            self.playable_areas = {(length, b): set() for length in range(1, 8) for b in [True, False]}
         # remove the spaces in that play from all playable areas
         for loc in play.letters:
             for playable_area in self.playable_areas:
@@ -69,21 +70,26 @@ class Board:
         :param recur: whether to add reachable squares from surrounding tiles as well
         """
         row, col = loc
+
         if recur:
-            max_dist = 7
             diff = 0
             for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                 new_row, new_col = row + dx, col + dy
                 self.add_playable_area_from_loc((new_row, new_col), False)
         else:
-            max_dist = 6
             diff = 1
-        for dist in range(1, max_dist + 1):
-            for dx, dy in [(0, dist), (0, -dist), (dist, 0), (-dist, 0)]:
+
+        if 0 <= row <= 14 and 0 <= col <= 14 and self.letters[row][col] == "":
+            for playable_area in [(length, b) for length in range(1, 8) for b in [True, False]]:
+                self.playable_areas[playable_area].add((row, col))
+
+        for dist in range(1, 8 - diff):
+            for right_going in [True, False]:
+                dx, dy = {True: (0, -dist), False: (-dist, 0)}[right_going]
                 new_row, new_col = row + dx, col + dy
                 if 0 <= new_row <= 14 and 0 <= new_col <= 14 and self.letters[new_row][new_col] == "":
-                    for playable_area in range(dist + diff, 8):
-                        self.playable_areas[playable_area].add((new_row, new_col))
+                    for length in range(dist + diff, 8):
+                        self.playable_areas[length, right_going].add((new_row, new_col))
 
     def score_play(self, play: Play) -> int:
         """
@@ -102,6 +108,8 @@ class Board:
             score += word_score * word_multiplier
         if len(play.letters) == 7:
             score += 50
+        if "s" in play.letters.values() or "q" in play.letters.values() or "z" in play.letters.values():
+            score -= 5
         return score
 
     def get_best_play(self, letters: str) -> tuple:
@@ -125,18 +133,14 @@ class Board:
             perms = all_length_perms(letters)
         perms = sorted(perms, key=lambda x: len(x), reverse=True)
         for w in perms:
-            if time.time() - start_time >= 45:
+            if time.time() - start_time >= 90:
                 print(w)
                 return best_play, best_score
-            for loc in self.playable_areas[len(w)]:
-                row, col = loc
-                bools = [True, False]
-                if row + len(w) > 15:
-                    bools.remove(False)
-                elif col + len(w) > 15:
-                    bools.remove(True)
-                for b in bools:
-                    play = self.generate_play_starting_at(w, row, col, b)
+            bools = [True, False]
+            for right_going in bools:
+                for loc in self.playable_areas[len(w), right_going]:
+                    row, col = loc
+                    play = self.generate_play_starting_at(w, row, col, right_going)
                     if "?" in w:
                         score = self.score_play(play)
                         if score > best_score:
