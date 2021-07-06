@@ -5,7 +5,7 @@ british_dictionary = "english_dictionary.txt"
 twl06 = "TWL06.txt"
 
 dicts = {}
-with open(merriam_webster_2014) as d:
+with open(british_dictionary) as d:
     words = d.read()
     words = words.split()
     words = dict.fromkeys(words, True)

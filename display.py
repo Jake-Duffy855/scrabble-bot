@@ -11,7 +11,7 @@ COLOR_ACTIVE = pygame.Color('dodgerblue2')
 FONT = pygame.font.Font(None, 16)
 clock = pygame.time.Clock()
 
-size = (450, 500)
+size = (450, 550)
 tile_size = 30
 cursor = [7, 7]
 submit_text = font.render("Submit", False, (255, 255, 255), (50, 50, 50))
@@ -20,8 +20,22 @@ get_best_text = font.render("Get Best", False, (255, 255, 255), (50, 50, 50))
 get_best_button = get_best_text.get_rect(center=(260, 475))
 remove_last_text = font.render("Remove Last", False, (255, 255, 255), (50, 50, 50))
 remove_last_button = remove_last_text.get_rect(center=(342, 475))
+get_recap_text = font.render("Recap", False, (255, 255, 255), (50, 50, 50))
+get_recap_button = get_recap_text.get_rect(center=(40, 525))
+next_turn_text = font.render("Next Turn", False, (255, 255, 255), (50, 50, 50))
+next_turn_button = next_turn_text.get_rect(center=(115, 525))
+prev_turn_text = font.render("Prev Turn", False, (255, 255, 255), (50, 50, 50))
+prev_turn_button = prev_turn_text.get_rect(center=(200, 525))
+show_best_text = font.render("Show Best", False, (255, 255, 255), (50, 50, 50))
+show_best_button = show_best_text.get_rect(center=(290, 525))
+show_actual_text = font.render("Show Actual", False, (255, 255, 255), (50, 50, 50))
+show_actual_button = show_actual_text.get_rect(center=(390, 525))
 letters = {}
-plays = [{}]
+plays = []
+best_plays = []
+tiles_had = []
+recap = False
+turn = 0
 
 # Set up the drawing window
 screen = pygame.display.set_mode(size)
@@ -119,8 +133,9 @@ def render_board(board: Board):
     add_highlight(cursor[0], cursor[1])
 
     # highlight last play
-    for row, col in plays[-1]:
-        add_highlight(col, row, color=(100, 250, 100))
+    if len(plays) > 0:
+        for row, col in plays[-1].letters:
+            add_highlight(col, row, color=(100, 250, 100))
 
 
 def add_highlight(x, y, color=(255, 220, 0)):
@@ -134,24 +149,30 @@ def render_controls():
     screen.blit(submit_text, submit_button)
     screen.blit(get_best_text, get_best_button)
     screen.blit(remove_last_text, remove_last_button)
+    screen.blit(get_recap_text, get_recap_button)
+    screen.blit(next_turn_text, next_turn_button)
+    screen.blit(prev_turn_text, prev_turn_button)
+    screen.blit(show_actual_text, show_actual_button)
+    screen.blit(show_best_text, show_best_button)
     input_box.update()
     input_box.draw(screen)
 
 
 def get_best():
-    global last_play
     print("Running...")
     t = time.time_ns()
     text = input_box.get_text()
     if len(text) <= 7:
         best_play, score = my_board.get_best_play(text)
-        print(best_play, score)
+        tiles_had.append(text)
+        best_plays.append(best_play)
+        # print(best_play, score)
         print((time.time_ns() - t) / 1000000)
-        try:
-            my_board.play(best_play)
-            plays.append(best_play.letters.copy())
-        except ValueError:
-            print("Invalid play")
+        # try:
+        #     my_board.play(best_play)
+        #     plays.append(best_play.letters.copy())
+        # except ValueError:
+        #     print("Invalid play")
 
     else:
         print("Please enter up to 7 letters.")
@@ -163,7 +184,7 @@ def remove_last():
     :return: None
     """
     try:
-        my_board.remove_play(Play(plays[-1]))
+        my_board.remove_play(plays[-1])
         plays.pop()
     except ValueError:
         print("No play to remove.")
@@ -195,7 +216,7 @@ def submit():
     try:
         print(my_board.score_play(Play(letters)))
         my_board.play(Play(letters))
-        plays.append(letters.copy())
+        plays.append(Play(letters.copy()))
     except ValueError:
         print("Invalid Play")
     letters = {}
@@ -209,6 +230,16 @@ def handle_button_up(event):
         get_best()
     elif remove_last_button.collidepoint(event.pos):
         remove_last()
+    elif get_recap_button.collidepoint(event.pos):
+        get_game_recap()
+    elif next_turn_button.collidepoint(event.pos):
+        get_next_turn()
+    elif prev_turn_button.collidepoint(event.pos):
+        get_previous_turn()
+    elif show_best_button.collidepoint(event.pos):
+        show_best()
+    elif show_actual_button.collidepoint(event.pos):
+        show_actual()
     elif event.pos[1] <= 450:
         cursor = [int(i / tile_size) for i in event.pos]
 
@@ -217,6 +248,56 @@ def handle_delete():
     row, col = cursor[1], cursor[0]
     if letters.get((row, col), False):
         letters.pop((row, col))
+
+
+def get_next_turn():
+    global turn, best_play, actual_play
+    show_actual()
+    turn += 1
+    actual_play = plays[turn]
+    best_play = best_plays[turn]
+    print(tiles_had[turn])
+    print(actual_play, my_board.score_play(actual_play))
+    print(best_play, my_board.score_play(best_play))
+
+
+def get_previous_turn():
+    global turn, best_play, actual_play
+    show_actual()
+    if turn > 0:
+        turn -= 1
+        actual_play = plays[turn]
+        best_play = best_plays[turn]
+        print(tiles_had[turn])
+        print(actual_play, my_board.score_play(actual_play))
+        print(best_play, my_board.score_play(best_play))
+
+
+def get_game_recap():
+    global my_board, turn, best_play, actual_play
+    my_board = Board()
+    actual_play = plays[turn]
+    best_play = best_plays[turn]
+    plays.append(actual_play)
+    print(tiles_had[turn])
+    print(actual_play, my_board.score_play(actual_play))
+    print(best_play, my_board.score_play(best_play))
+
+
+def show_actual():
+    global turn, best_play, actual_play
+    my_board.remove_play(best_play)
+    my_board.remove_play(actual_play)
+    my_board.play(actual_play)
+    plays[-1] = actual_play
+
+
+def show_best():
+    global turn, best_play, actual_play
+    my_board.remove_play(best_play)
+    my_board.remove_play(actual_play)
+    my_board.play(best_play)
+    plays[-1] = best_play
 
 
 if __name__ == '__main__':
