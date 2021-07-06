@@ -15,11 +15,13 @@ size = (450, 500)
 tile_size = 30
 cursor = [7, 7]
 submit_text = font.render("Submit", False, (255, 255, 255), (50, 50, 50))
-submit_button = submit_text.get_rect(center=(400, 475))
+submit_button = submit_text.get_rect(center=(420, 475))
 get_best_text = font.render("Get Best", False, (255, 255, 255), (50, 50, 50))
-get_best_button = get_best_text.get_rect(center=(280, 475))
+get_best_button = get_best_text.get_rect(center=(260, 475))
+remove_last_text = font.render("Remove Last", False, (255, 255, 255), (50, 50, 50))
+remove_last_button = remove_last_text.get_rect(center=(342, 475))
 letters = {}
-last_play = {}
+plays = [{}]
 
 # Set up the drawing window
 screen = pygame.display.set_mode(size)
@@ -117,7 +119,7 @@ def render_board(board: Board):
     add_highlight(cursor[0], cursor[1])
 
     # highlight last play
-    for row, col in last_play:
+    for row, col in plays[-1]:
         add_highlight(col, row, color=(100, 250, 100))
 
 
@@ -131,6 +133,7 @@ def add_highlight(x, y, color=(255, 220, 0)):
 def render_controls():
     screen.blit(submit_text, submit_button)
     screen.blit(get_best_text, get_best_button)
+    screen.blit(remove_last_text, remove_last_button)
     input_box.update()
     input_box.draw(screen)
 
@@ -146,12 +149,24 @@ def get_best():
         print((time.time_ns() - t) / 1000000)
         try:
             my_board.play(best_play)
-            last_play = best_play.letters.copy()
+            plays.append(best_play.letters.copy())
         except ValueError:
             print("Invalid play")
 
     else:
         print("Please enter up to 7 letters.")
+
+
+def remove_last():
+    """
+    Remove the play stored in last play from the board
+    :return: None
+    """
+    try:
+        my_board.remove_play(Play(plays[-1]))
+        plays.pop()
+    except ValueError:
+        print("No play to remove.")
 
 
 def handle_key(event):
@@ -180,7 +195,7 @@ def submit():
     try:
         print(my_board.score_play(Play(letters)))
         my_board.play(Play(letters))
-        last_play = letters.copy()
+        plays.append(letters.copy())
     except ValueError:
         print("Invalid Play")
     letters = {}
@@ -192,6 +207,8 @@ def handle_button_up(event):
         submit()
     elif get_best_button.collidepoint(event.pos):
         get_best()
+    elif remove_last_button.collidepoint(event.pos):
+        remove_last()
     elif event.pos[1] <= 450:
         cursor = [int(i / tile_size) for i in event.pos]
 
