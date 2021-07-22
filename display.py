@@ -266,6 +266,8 @@ def get_previous_turn():
     show_actual()
     if turn > 0:
         turn -= 1
+        my_board.remove_play(best_play)
+        my_board.remove_play(actual_play)
         actual_play = plays[turn]
         best_play = best_plays[turn]
         print(tiles_had[turn])

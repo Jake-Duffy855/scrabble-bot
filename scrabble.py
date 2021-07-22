@@ -3,9 +3,10 @@ import time
 merriam_webster_2014 = "merriam_webster.txt"
 british_dictionary = "english_dictionary.txt"
 twl06 = "TWL06.txt"
+nwl_2020 = "NWL2020.txt"
 
 dicts = {}
-with open(british_dictionary) as d:
+with open(nwl_2020) as d:
     words = d.read()
     words = words.split()
     words = dict.fromkeys(words, True)
